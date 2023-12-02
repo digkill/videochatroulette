@@ -5,9 +5,11 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"sync"
 )
 
 var AllMeets MeetMap
+var MUTEX sync.RWMutex
 
 func CreateMeetRequestHandler(responseWrite http.ResponseWriter, request *http.Request) {
 	responseWrite.Header().Set("Access-Control-Allow-Origin", "*")
@@ -40,19 +42,28 @@ type broadcastMessage struct {
 var broadcast = make(chan broadcastMessage)
 
 func broadcaster() {
+
 	for {
 		message := <-broadcast
 
 		for _, client := range AllMeets.Map[message.MeetID] {
+
+			MUTEX.RLock()
 			if client.Conn != message.Client {
+
 				err := client.Conn.WriteJSON(message.Message)
 
 				if err != nil {
 					log.Fatal(err)
-					client.Conn.Close()
+					err := client.Conn.Close()
+					if err != nil {
+						return
+					}
 				}
 			}
+			MUTEX.RUnlock()
 		}
+
 	}
 }
 

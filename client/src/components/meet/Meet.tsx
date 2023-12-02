@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
+import {useParams} from 'react-router-dom'
 
-const Meet = (props:any) => {
+const Meet:React.FC = (props: any) => {
   const userVideo = useRef<HTMLVideoElement>(null)
   const userStream = useRef<MediaStream>(null)
   const partnerVideo = useRef<HTMLVideoElement>(null)
   const peerRef = useRef<RTCPeerConnection>(null)
   const webSocketRef = useRef(null)
-
+  const params = useParams();
 
   const openCamera = async () => {
     const allDevices:MediaDeviceInfo[] = await navigator.mediaDevices.enumerateDevices()
@@ -40,10 +41,8 @@ const Meet = (props:any) => {
       userStream.current = stream
 
 
-      console.log('props.match.params.meetID', props.match)
-
       // @ts-ignore
-      webSocketRef.current = new WebSocket(`ws://localhost:8000/join-meet?meetID=${props.match.params.meetID}`)
+      webSocketRef.current = new WebSocket(`ws://localhost:8000/join-meet?meetID=${params.meetID}`)
 
       // @ts-ignore
       webSocketRef.current.addEventListener("open", ():void => {
