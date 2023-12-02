@@ -5,11 +5,16 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
-	"sync"
+	"time"
+)
+
+const (
+	writeWait  = 10 * time.Second
+	pongWait   = 60 * time.Second
+	pingPeriod = (pongWait * 9) / 10
 )
 
 var AllMeets MeetMap
-var MUTEX sync.RWMutex
 
 func CreateMeetRequestHandler(responseWrite http.ResponseWriter, request *http.Request) {
 	responseWrite.Header().Set("Access-Control-Allow-Origin", "*")
@@ -43,14 +48,19 @@ var broadcast = make(chan broadcastMessage)
 
 func broadcaster() {
 
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+
+	}()
+
 	for {
 		message := <-broadcast
 
 		for _, client := range AllMeets.Map[message.MeetID] {
 
-			MUTEX.RLock()
 			if client.Conn != message.Client {
-
+				client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 				err := client.Conn.WriteJSON(message.Message)
 
 				if err != nil {
@@ -61,7 +71,6 @@ func broadcaster() {
 					}
 				}
 			}
-			MUTEX.RUnlock()
 		}
 
 	}
