@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -8,18 +9,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Participant struct {
-	Host bool
-	Conn *websocket.Conn
+type Member struct {
+	IsHost bool
+	Conn   *websocket.Conn
 }
 
 type MeetMap struct {
 	Mutex sync.RWMutex
-	Map   map[string][]Participant
+	Map   map[string][]Member
 }
 
 func (meetMap *MeetMap) Init() {
-	meetMap.Map = make(map[string][]Participant)
+	meetMap.Map = make(map[string][]Member)
 }
 
 func (meetMap *MeetMap) CreateMeet() string {
@@ -36,7 +37,24 @@ func (meetMap *MeetMap) CreateMeet() string {
 	}
 
 	meetID := string(slug)
-	meetMap.Map[meetID] = []Participant{}
+	meetMap.Map[meetID] = []Member{}
 
 	return meetID
+}
+
+func (meetMap *MeetMap) InsertIntoRoom(meetID string, isHost bool, conn *websocket.Conn) {
+	meetMap.Mutex.Lock()
+	defer meetMap.Mutex.Unlock()
+
+	member := Member{isHost, conn}
+
+	log.Println("Inserting into Meet with meetID: ", meetID)
+	meetMap.Map[meetID] = append(meetMap.Map[meetID], member)
+}
+
+func (meetMap *MeetMap) DeleteMeet(meetID string) {
+	meetMap.Mutex.Lock()
+	defer meetMap.Mutex.Unlock()
+
+	delete(meetMap.Map, meetID)
 }
