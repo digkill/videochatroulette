@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import {useParams} from 'react-router-dom'
 
-const Meet:React.FC = (props: any) => {
+const Meet:React.FC = () => {
   const userVideo = useRef<HTMLVideoElement>(null)
   const userStream = useRef<MediaStream>(null)
   const partnerVideo = useRef<HTMLVideoElement>(null)
