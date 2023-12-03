@@ -2,16 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
 const (
-	writeWait  = 10 * time.Second
-	pongWait   = 60 * time.Second
-	pingPeriod = (pongWait * 9) / 10
+	writeWait = 10 * time.Second
+	pongWait  = 60 * time.Second
+	//	pingPeriod = (pongWait * 9) / 10
 )
 
 var AllMeets MeetMap
@@ -48,16 +50,18 @@ var broadcast = make(chan broadcastMessage)
 
 func broadcaster() {
 
-	ticker := time.NewTicker(pingPeriod)
-	defer func() {
-		ticker.Stop()
-
-	}()
-
+	s := new(sync.RWMutex)
+	defer s.Unlock()
 	for {
-		message := <-broadcast
-
+		message, ok := <-broadcast
+		s.Lock()
 		for _, client := range AllMeets.Map[message.MeetID] {
+
+			if !ok {
+				client.Conn.Close()
+				fmt.Println(ok)
+				return
+			}
 
 			if client.Conn != message.Client {
 				client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
@@ -65,12 +69,10 @@ func broadcaster() {
 
 				if err != nil {
 					log.Fatal(err)
-					err := client.Conn.Close()
-					if err != nil {
-						return
-					}
+					client.Conn.Close()
 				}
 			}
+
 		}
 
 	}

@@ -19,7 +19,7 @@ const Meet:React.FC = () => {
     const constraints = {
       audio: true,
       video: {
-        deviceId: cameras[1].deviceId,
+        deviceId: cameras[0].deviceId,
       },
     }
 
@@ -73,6 +73,7 @@ const Meet:React.FC = () => {
         if (message.iceCandidate) {
           console.log("Receiving and Adding ICE Candidate");
           try {
+
             // @ts-ignore
             await peerRef.current.addIceCandidate(
               message.iceCandidate
@@ -165,21 +166,21 @@ const Meet:React.FC = () => {
     }
   }
 
-  const handleTrackEvent = (e:Event):void => {
+  const handleTrackEvent = (e:any):void => {
     console.log("Received Tracks");
     // @ts-ignore
     partnerVideo.current.srcObject = e.streams[0]
+    console.log('e.streams', e.streams)
   }
 
   return (
     <div className='container'>
       <div className='row'>
         <div className='col-6'>
-          <video src='https://www.youtube.com/watch?v=CLoUY1kA4ZY&ab_channel=TOKUMAJAPAN' className='object-fit-cover'
-                 ref={userVideo} autoPlay></video>
+          <video className='object-fit-cover' ref={userVideo} autoPlay controls={true}></video>
         </div>
         <div className='col-6'>
-          <video src='' className='object-fit-cover' ref={partnerVideo} autoPlay></video>
+          <video className='object-fit-cover' ref={partnerVideo} autoPlay controls={true}></video>
         </div>
       </div>
     </div>

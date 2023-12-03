@@ -23,6 +23,13 @@ func (meetMap *MeetMap) Init() {
 	meetMap.Map = make(map[string][]Member)
 }
 
+func (meetMap *MeetMap) Get(roomID string) []Member {
+	meetMap.Mutex.RLock()
+	defer meetMap.Mutex.RUnlock()
+
+	return meetMap.Map[roomID]
+}
+
 func (meetMap *MeetMap) CreateMeet() string {
 	meetMap.Mutex.Lock()
 	defer meetMap.Mutex.Unlock()
